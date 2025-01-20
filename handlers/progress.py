@@ -41,17 +41,19 @@ async def show_progress(message: Message):
     city = user_data.get("city", "не указан")
     water_norm = user_data.get("water_norm", "не рассчитана")
     calories_norm = user_data.get("calories_norm", "не рассчитана")
-
+    calories_logged = user_data.get("calories_logged", 0)
+    water_logged = user_data.get("water_logged", 0)
+    burned_calories = user_data.get("burned_calories", 0)
     # Формируем ответ
     progress_message = (
         f"Ваш текущий прогресс:\n"
-        f"Вес: {weight} кг\n"
-        f"Рост: {height} см\n"
-        f"Возраст: {age} лет\n"
-        f"Уровень активности: {activity} мин\n"
-        f"Город: {city}\n"
-        f"Дневная норма воды: {water_norm:.0f} мл\n"
-        f"Дневная норма калорий: {calories_norm:.0f} Ккал"
+        f"ВОДА:\n"
+        f"Выпито воды: {water_logged:.0f} из {water_norm:.0f} мл \n"
+        f"Баланс: {water_norm - water_logged:.0f}\n"
+        f"КАЛОРИИ:\n"
+        f"Потреблено калорий: {calories_logged:.0f} из {calories_norm:.0f} ккал \n"
+        f"Сожжено калорий: {burned_calories:.0f}\n"
+        f"Баланс: {calories_norm + burned_calories - calories_logged:.0f} ккал"
     )
 
     await message.answer(progress_message)

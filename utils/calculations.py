@@ -54,3 +54,29 @@ def calculate_calories_norm(weight, height, age, gender, activity):
     daily_calories = bmr * activity_level
 
     return round(daily_calories, 2)
+
+def calculate_workout(workout_type, duration):
+    """
+    Рассчитывает калории и воду в зависимости от типа тренировки и длительности.
+
+    :param workout_type: Тип тренировки.
+    :param duration: Длительность тренировки в минутах.
+    :return: Кортеж (сожженные калории, дополнительные мл воды).
+    """
+    workout_data = {
+        "бег": {"calories_per_minute": 10, "water_per_30_min": 200},
+        "плавание": {"calories_per_minute": 8, "water_per_30_min": 250},
+        "йога": {"calories_per_minute": 3, "water_per_30_min": 100},
+        "велосипед": {"calories_per_minute": 7, "water_per_30_min": 150},
+        "силовая тренировка": {"calories_per_minute": 6, "water_per_30_min": 200},
+        "ходьба": {"calories_per_minute": 4, "water_per_30_min": 100},
+
+    }
+
+    workout = workout_data.get(workout_type.lower())
+    if not workout:
+        return None, None
+
+    calories = workout["calories_per_minute"] * duration
+    additional_water = (duration / 30) * workout["water_per_30_min"]
+    return calories, additional_water

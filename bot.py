@@ -16,9 +16,9 @@ logging.basicConfig(level=logging.INFO)
 # Регистрируем обработчики
 dp.include_router(commands.router)
 dp.include_router(profile.router)
-# dp.include_router(water.router)
-# dp.include_router(food.router)
-# dp.include_router(workout.router)
+dp.include_router(water.router)
+dp.include_router(food.router)
+dp.include_router(workout.router)
 dp.include_router(progress.router)
 
 async def main():
