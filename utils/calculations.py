@@ -70,6 +70,7 @@ def calculate_workout(workout_type, duration):
         "велосипед": {"calories_per_minute": 7, "water_per_30_min": 150},
         "силовая тренировка": {"calories_per_minute": 6, "water_per_30_min": 200},
         "ходьба": {"calories_per_minute": 4, "water_per_30_min": 100},
+        "Сноуборд": {"calories_per_minute": 8, "water_per_30_min": 200},
 
     }
 
