@@ -1,8 +1,10 @@
 import json
 from pathlib import Path
 from aiogram import Router
-from aiogram.types import Message
+from aiogram.types import Message, FSInputFile
 from aiogram.filters import Command
+
+from utils.helpers import create_combined_progress_chart
 
 # Путь к файлу для хранения данных
 STORAGE_FILE = Path("data/storage.json")
@@ -34,28 +36,30 @@ async def show_progress(message: Message):
 
     # Получаем данные пользователя
     user_data = all_users[user_id]
-    weight = user_data.get("weight", "не указан")
-    height = user_data.get("height", "не указан")
-    age = user_data.get("age", "не указан")
-    activity = user_data.get("activity", "не указан")
-    city = user_data.get("city", "не указан")
-    water_norm = user_data.get("water_norm", "не рассчитана")
-    calories_norm = user_data.get("calories_norm", "не рассчитана")
-    calories_logged = user_data.get("calories_logged", 0)
+    water_norm = user_data.get("water_norm", 0)
+    calories_norm = user_data.get("calories_norm", 0)
     water_logged = user_data.get("water_logged", 0)
+    calories_logged = user_data.get("calories_logged", 0)
     burned_calories = user_data.get("burned_calories", 0)
-    # Формируем ответ
+
+    # Учитываем сожжённые калории
+    calories_norm += burned_calories
+
+    # Формируем сообщение о прогрессе
     progress_message = (
         f"Ваш текущий прогресс:\n"
         f"ВОДА:\n"
-        f"Выпито воды: {water_logged:.0f} из {water_norm:.0f} мл \n"
-        f"Баланс: {water_norm - water_logged:.0f}\n"
+        f"Выпито воды: {water_logged:.0f} из {water_norm:.0f} мл\n"
+        f"Баланс: {water_norm - water_logged:.0f} мл\n"
         f"КАЛОРИИ:\n"
-        f"Потреблено калорий: {calories_logged:.0f} из {calories_norm:.0f} ккал \n"
-        f"Сожжено калорий: {burned_calories:.0f}\n"
-        f"Баланс: {calories_norm + burned_calories - calories_logged:.0f} ккал"
+        f"Потреблено калорий: {calories_logged:.0f} из {calories_norm:.0f} ккал\n"
+        f"Сожжено калорий: {burned_calories:.0f} ккал\n"
+        f"Баланс: {calories_norm - calories_logged:.0f} ккал"
     )
 
+    # Создаём и отправляем диаграмму
+    chart_path = Path(f"data/progress_{str(message.from_user.id)}.png")
+    create_combined_progress_chart(water_logged, water_norm, calories_logged, calories_norm, chart_path)
+
     await message.answer(progress_message)
-
-
+    await message.answer_photo(FSInputFile(chart_path))

@@ -5,6 +5,7 @@ from aiogram.types import Message
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 from utils.api import get_temp
 from utils.calculations import calculate_water_norm, calculate_calories_norm
@@ -71,27 +72,54 @@ async def process_height(message: Message, state: FSMContext):
 
 @router.message(ProfileState.age)
 async def process_age(message: Message, state: FSMContext):
+    """
+    Обработка возраста пользователя.
+    """
     try:
         age = int(message.text)
         if age <= 0:
             raise ValueError
         await state.update_data(age=age)
-        await message.answer("Укажите пол (male/female)")
+
+        # Создаем клавиатуру для выбора пола
+        keyboard = ReplyKeyboardMarkup(
+            keyboard=[
+                [KeyboardButton(text="Мужской"), KeyboardButton(text="Женский")],
+            ],
+            resize_keyboard=True,
+            one_time_keyboard=True
+        )
+
+        await message.answer("Укажите ваш пол:", reply_markup=keyboard)
         await state.set_state(ProfileState.gender)
     except ValueError:
         await message.answer("Пожалуйста, введите корректное значение возраста (целое число больше 0).")
 
+
 @router.message(ProfileState.gender)
-async def process_age(message: Message, state: FSMContext):
-    try:
-        gender = message.text.strip()
-        if gender not in ('male', 'female'):
-            raise ValueError
-        await state.update_data(gender=gender)
-        await message.answer("Сколько минут активности у вас в день?")
-        await state.set_state(ProfileState.activity)
-    except ValueError:
-        await message.answer("Пожалуйста, введите корректное значение пола (male/female).")
+async def process_gender(message: Message, state: FSMContext):
+    """
+    Обработка выбора пола пользователя.
+    """
+    gender = message.text.strip().lower()
+    if gender not in ("мужской", "женский"):
+        # Если ввод неверный, повторяем запрос
+        keyboard = ReplyKeyboardMarkup(
+            keyboard=[
+                [KeyboardButton(text="Мужской"), KeyboardButton(text="Женский")],
+            ],
+            resize_keyboard=True,
+            one_time_keyboard=True
+        )
+        await message.answer("Пожалуйста, выберите ваш пол:", reply_markup=keyboard)
+        return
+
+    # Сохраняем пол в формате male/female
+    await state.update_data(gender="male" if gender == "мужской" else "female")
+
+    # Переходим к следующему шагу
+    await message.answer("Сколько минут активности у вас в день?", reply_markup=None)
+    await state.set_state(ProfileState.activity)
 
 @router.message(ProfileState.activity)
 async def process_activity(message: Message, state: FSMContext):
@@ -147,8 +175,8 @@ async def process_city(message: Message, state: FSMContext):
 
     await state.update_data(calories_norm=calories_norm)
 
-    # Обновляем данные пользователя, включая норму воды
-    all_users[str(message.from_user.id)] = {
+    # Записываем данные пользователя, включая норму воды
+    updated_fields = {
         "weight": data["weight"],
         "height": data["height"],
         "age": data["age"],
@@ -158,6 +186,12 @@ async def process_city(message: Message, state: FSMContext):
         "water_norm": water_norm,
         "calories_norm": calories_norm
     }
+
+    # Обновляем только указанные поля для пользователя
+    if str(message.from_user.id) not in all_users:
+        all_users[str(message.from_user.id)] = {}
+
+    all_users[str(message.from_user.id)].update(updated_fields)
 
     # Сохраняем данные в файл
     save_data(all_users)
