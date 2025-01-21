@@ -26,18 +26,6 @@ dp.include_router(progress.router)
 async def main():
     print("Бот запущен!")
 
-    # Фейковый веб-сервер для Render
-    async def handle(request):
-        return web.Response(text="Bot is running!")
-
-    app = web.Application()
-    app.router.add_get("/", handle)
-
-    # Запускаем веб-сервер параллельно с polling
-    runner = web.AppRunner(app)
-    await runner.setup()
-    site = web.TCPSite(runner, "0.0.0.0", 5000)
-    await site.start()
 
     # Запускаем polling
     await dp.start_polling(bot)
