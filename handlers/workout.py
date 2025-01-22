@@ -9,6 +9,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
 from utils.calculations import calculate_workout
+from utils.helpers import load_data, save_data
 
 # Путь к файлу для хранения данных
 STORAGE_FILE = Path("data/storage.json")
@@ -21,21 +22,6 @@ router = Router()
 class WorkoutLogStates(StatesGroup):
     type_training = State()
     duration_training = State()
-
-
-def load_data():
-    """Загрузка данных из файла JSON."""
-    if STORAGE_FILE.exists():
-        with open(STORAGE_FILE, "r", encoding="utf-8") as file:
-            return json.load(file)
-    return {}
-
-
-def save_data(data):
-    """Сохранение данных в файл JSON."""
-    STORAGE_FILE.parent.mkdir(parents=True, exist_ok=True)
-    with open(STORAGE_FILE, "w", encoding="utf-8") as file:
-        json.dump(data, file, ensure_ascii=False, indent=4)
 
 
 @router.message(Command("log_workout"))
@@ -66,7 +52,7 @@ async def process_product_name(message: Message, state: FSMContext):
 
         # Загружаем данные пользователя
         user_id = str(message.from_user.id)
-        all_users = load_data()
+        all_users = load_data(STORAGE_FILE)
         user_data = all_users.get(user_id, {})
 
         # Обновляем общее количество сожженых калорий
@@ -79,7 +65,7 @@ async def process_product_name(message: Message, state: FSMContext):
 
         # Сохраняем данные
         all_users[user_id] = user_data
-        save_data(all_users)
+        save_data(STORAGE_FILE, all_users)
 
         # Ответ пользователю
         await message.answer(

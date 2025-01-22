@@ -1,5 +1,26 @@
 # Утилитарные функции (например, парсинг)
 import matplotlib.pyplot as plt
+import json
+from pathlib import Path
+
+from utils.calculations import calculate_calories_norm, calculate_water_norm
+from utils.api import get_temp
+
+
+def load_data(STORAGE_FILE):
+    """Загрузка данных из файла JSON."""
+    if STORAGE_FILE.exists():
+        with open(STORAGE_FILE, "r", encoding="utf-8") as file:
+            return json.load(file)
+    return {}
+
+
+def save_data(STORAGE_FILE, data):
+    """Сохранение данных в файл JSON."""
+    STORAGE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with open(STORAGE_FILE, "w", encoding="utf-8") as file:
+        json.dump(data, file, ensure_ascii=False, indent=4)
+
 
 def create_combined_progress_chart(water_logged, water_norm, calories_logged, calories_norm, file_path):
     """
@@ -64,3 +85,24 @@ def create_combined_progress_chart(water_logged, water_norm, calories_logged, ca
     # Сохранение изображения
     plt.savefig(file_path)
     plt.close(fig)
+
+
+def update_daily_goals(user_data):
+    """Обновляет ежедневные нормы пользователя."""
+
+    # Обновляем общее количество сожженых калорий
+    user_data["water_logged"] = 0
+    user_data["calories_logged"] = 0
+    user_data["burned_calories"] = 0
+
+    weight = user_data["weight"]
+    height = user_data["height"]
+    age = user_data["age"]
+    gender = user_data["gender"]
+    activity = user_data["activity"]
+    temperature = get_temp(user_data["city"])["temp"]
+
+    user_data["calories_norm"] = calculate_calories_norm(weight, height, age, gender, activity)
+    user_data["water_norm"] = calculate_water_norm(weight, activity, temperature)
+
+    return user_data
