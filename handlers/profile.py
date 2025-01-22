@@ -9,6 +9,7 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 from utils.api import get_temp
 from utils.calculations import calculate_water_norm, calculate_calories_norm
+from utils.helpers import load_data, save_data
 
 # Путь к файлу для хранения данных
 STORAGE_FILE = Path("data/storage.json")
@@ -24,19 +25,6 @@ class ProfileState(StatesGroup):
     gender = State()
     activity = State()
     city = State()
-
-def load_data():
-    """Загрузка данных из файла JSON."""
-    if STORAGE_FILE.exists():
-        with open(STORAGE_FILE, "r", encoding="utf-8") as file:
-            return json.load(file)
-    return {}
-
-def save_data(data):
-    """Сохранение данных в файл JSON."""
-    STORAGE_FILE.parent.mkdir(parents=True, exist_ok=True)  # Создаем папку, если её нет
-    with open(STORAGE_FILE, "w", encoding="utf-8") as file:
-        json.dump(data, file, ensure_ascii=False, indent=4)
 
 @router.message(Command("set_profile"))
 async def set_profile(message: Message, state: FSMContext):
@@ -154,7 +142,7 @@ async def process_city(message: Message, state: FSMContext):
     data = await state.get_data()
 
     # Загружаем существующие данные из файла
-    all_users = load_data()
+    all_users = load_data(STORAGE_FILE)
 
     # Рассчитываем дневную норму воды
     water_norm = calculate_water_norm(
@@ -194,7 +182,7 @@ async def process_city(message: Message, state: FSMContext):
     all_users[str(message.from_user.id)].update(updated_fields)
 
     # Сохраняем данные в файл
-    save_data(all_users)
+    save_data(STORAGE_FILE, all_users)
 
     # Завершаем FSM
     await state.clear()

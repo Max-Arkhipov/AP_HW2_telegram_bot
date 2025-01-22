@@ -8,6 +8,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
 from utils.api import get_food
+from utils.helpers import load_data, save_data
 
 # Путь к файлу для хранения данных
 STORAGE_FILE = Path("data/storage.json")
@@ -21,21 +22,6 @@ class FoodLogStates(StatesGroup):
     waiting_for_product = State()
     waiting_for_choice = State()
     waiting_for_quantity = State()
-
-
-def load_data():
-    """Загрузка данных из файла JSON."""
-    if STORAGE_FILE.exists():
-        with open(STORAGE_FILE, "r", encoding="utf-8") as file:
-            return json.load(file)
-    return {}
-
-
-def save_data(data):
-    """Сохранение данных в файл JSON."""
-    STORAGE_FILE.parent.mkdir(parents=True, exist_ok=True)
-    with open(STORAGE_FILE, "w", encoding="utf-8") as file:
-        json.dump(data, file, ensure_ascii=False, indent=4)
 
 
 @router.message(Command("log_food"))
@@ -117,12 +103,12 @@ async def process_quantity(message: Message, state: FSMContext):
 
         # Сохраняем результат в общий счётчик калорий
         user_id = str(message.from_user.id)
-        all_users = load_data()
+        all_users = load_data(STORAGE_FILE)
         user_data = all_users.get(user_id, {})
         total_logged_calories = user_data.get("calories_logged", 0)
         user_data["calories_logged"] = total_logged_calories + total_calories
         all_users[user_id] = user_data
-        save_data(all_users)
+        save_data(STORAGE_FILE, all_users)
 
         await message.answer(
             f"Продукт: {selected_product['product_name']}\n"

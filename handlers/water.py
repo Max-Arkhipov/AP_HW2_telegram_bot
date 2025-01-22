@@ -6,27 +6,13 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
+from utils.helpers import load_data, save_data
+
 # Путь к файлу для хранения данных
 STORAGE_FILE = Path("data/storage.json")
 
 # Создаем роутер
 router = Router()
-
-
-def load_data():
-    """Загрузка данных из файла JSON."""
-    if STORAGE_FILE.exists():
-        with open(STORAGE_FILE, "r", encoding="utf-8") as file:
-            return json.load(file)
-    return {}
-
-
-def save_data(data):
-    """Сохранение данных в файл JSON."""
-    STORAGE_FILE.parent.mkdir(parents=True, exist_ok=True)
-    with open(STORAGE_FILE, "w", encoding="utf-8") as file:
-        json.dump(data, file, ensure_ascii=False, indent=4)
-
 
 # Определение состояний FSM
 class WaterLogStates(StatesGroup):
@@ -49,7 +35,7 @@ async def add_water(message: Message, state: FSMContext):
     Обработка введённого количества воды.
     """
     user_id = str(message.from_user.id)
-    all_users = load_data()
+    all_users = load_data(STORAGE_FILE)
 
     # Если пользователь не существует, создаём запись
     if user_id not in all_users:
@@ -63,7 +49,7 @@ async def add_water(message: Message, state: FSMContext):
 
         # Обновляем лог воды
         all_users[user_id]["water_logged"] = all_users[user_id].get("water_logged", 0) + water_amount
-        save_data(all_users)
+        save_data(STORAGE_FILE, all_users)
 
         total_water = all_users[user_id]["water_logged"]
         await message.answer(f"Вы добавили {water_amount} мл воды. Всего сегодня: {total_water} мл.")
